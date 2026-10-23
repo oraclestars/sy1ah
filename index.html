@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="avatar.jpg">
+    <title>BAGASY1AH.dev | Cyber Matrix Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Orbitron & Rajdhani for Cyberpunk aesthetics -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: #030712;
+            color: #e0f2fe;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h2, .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* 3D Canvas fixed background */
+        #webgl-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: auto;
+        }
+
+        /* Scanline Overlay for Sci-Fi Monitor Effect */
+        .scanlines {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+
+        /* Scrolling Marquee / Ticker styling */
+        .marquee-wrapper {
+            background: rgba(3, 7, 18, 0.85);
+            border-bottom: 1px solid rgba(6, 182, 212, 0.3);
+            backdrop-filter: blur(8px);
+        }
+
+        .marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 22s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Futuristic Hologram Glassmorphism Cards & Buttons */
+        .holo-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.15), inset 0 0 15px rgba(6, 182, 212, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .holo-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.2), transparent);
+            transition: left 0.5s ease-in-out;
+        }
+
+        .holo-card:hover::before {
+            left: 100%;
+        }
+
+        .holo-button {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.1);
+            transition: all 0.25s ease-out;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        .holo-button:hover {
+            background: rgba(6, 182, 212, 0.25);
+            border-color: rgba(56, 189, 248, 0.9);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5), inset 0 0 10px rgba(6, 182, 212, 0.25);
+            transform: translateY(-2px) scale(1.01);
+            color: #ffffff;
+        }
+
+        /* Profile Glitch Text Effect */
+        .glitch-title {
+            position: relative;
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 25px rgba(236, 72, 153, 0.5);
+        }
+
+        /* Hexagonal Avatar Container & Clip Path */
+        .hex-clip {
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+
+        @keyframes rotate-hex {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .avatar-ring {
+            animation: rotate-hex 20s linear infinite;
+        }
+
+        /* Equalizer Bar Animation */
+        .eq-bar {
+            width: 3px;
+            background-color: #06b6d4;
+            border-radius: 2px;
+            animation: eqPulse 1s ease-in-out infinite alternate;
+        }
+        .eq-bar:nth-child(1) { height: 40%; animation-delay: 0.1s; }
+        .eq-bar:nth-child(2) { height: 80%; animation-delay: 0.3s; }
+        .eq-bar:nth-child(3) { height: 50%; animation-delay: 0.2s; }
+        .eq-bar:nth-child(4) { height: 95%; animation-delay: 0.4s; }
+        .eq-bar:nth-child(5) { height: 30%; animation-delay: 0.15s; }
+
+        .paused .eq-bar {
+            animation-play-state: paused;
+            height: 20% !important;
+        }
+
+        @keyframes eqPulse {
+            0% { height: 20%; }
+            100% { height: 100%; }
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: rgba(6, 182, 212, 0.2);
+            height: 4px;
+            border-radius: 2px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #06b6d4;
+            box-shadow: 0 0 8px #06b6d4;
+            cursor: pointer;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(6, 182, 212, 0.5);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col justify-between items-center select-none overflow-y-auto">
+
+    <!-- 3D WebGL Canvas Background -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- CRT Scanlines Visual Overlay -->
+    <div class="fixed inset-0 scanlines z-10 pointer-events-none"></div>
+
+    <!-- MAIN CONTAINER (UI overlay above canvas) -->
+    <div class="relative z-20 w-full flex flex-col items-center min-h-screen pb-24">
+
+        <!-- TOP MARQUEE / TICKER SPAN -->
+        <div class="w-full marquee-wrapper py-2 px-4 z-30 text-xs font-mono tracking-widest text-cyan-400 flex items-center overflow-hidden border-b border-cyan-500/30">
+            <div class="flex items-center gap-2 bg-cyan-950/80 px-2.5 py-0.5 rounded text-[10px] font-bold border border-cyan-500/50 mr-2 shrink-0 z-10 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                SYSTEM ACTIVE
+            </div>
+            <div class="marquee-content font-semibold">
+                <span class="small-text-ticker text-cyan-300">
+                    // WELCOME TO BAGASY1AH.dev // STATUS: ONLINE // MATRIX NODE READY // SELECT DESIRED REDIRECT LINK BELOW // ENCRYPTED SESSION ESTABLISHED // FEATURING CYBER AUDIO STREAM //
+                </span>
+            </div>
+        </div>
+
+        <!-- TOP CONTROL BAR (Sound Effects Toggle & Share) -->
+        <div class="w-full max-w-md px-4 mt-4 flex justify-between items-center text-xs">
+            <button id="sfx-toggle-btn" class="holo-card px-3 py-1.5 rounded-md text-cyan-400 hover:text-cyan-200 flex items-center gap-2 border border-cyan-500/30">
+                <i class="fa-solid fa-volume-xmark" id="sfx-icon"></i>
+                <span id="sfx-status">SFX: OFF</span>
+            </button>
+
+            <button id="share-btn" class="holo-card px-3 py-1.5 rounded-md text-cyan-400 hover:text-cyan-200 flex items-center gap-2 border border-cyan-500/30">
+                <i class="fa-solid fa-share-nodes"></i>
+                <span>SHARE PORTAL</span>
+            </button>
+        </div>
+
+        <!-- PROFILE / HEADER SECTION -->
+        <header class="mt-6 flex flex-col items-center text-center px-4 max-w-md w-full">
+            <!-- Hexagonal Avatar Frame -->
+            <div class="relative w-32 h-32 mb-4 flex items-center justify-center">
+                <!-- Outer Rotating Hologram Ring -->
+                <svg class="absolute inset-0 w-full h-full avatar-ring text-cyan-400 opacity-90" viewBox="0 0 100 100">
+                    <polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="10 5"/>
+                </svg>
+                <!-- Counter-Rotating Ring -->
+                <svg class="absolute inset-1.5 w-[92%] h-[92%] avatar-ring text-fuchsia-500 opacity-70" viewBox="0 0 100 100" style="animation-direction: reverse; animation-duration: 12s;">
+                    <polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+                
+                <!-- Hexagonal Profile Image Wrapper -->
+                <div class="w-20 h-20 hex-clip p-[1.5px] bg-gradient-to-tr from-cyan-400 via-fuchsia-500 to-cyan-300 shadow-[0_0_25px_rgba(6,182,212,0.6)] z-10 flex items-center justify-center">
+                    <div class="w-full h-full hex-clip bg-slate-900 relative overflow-hidden flex items-center justify-center">
+                        <!-- Profile Image -->
+                        <img id="profile-img" 
+                             src="avatar.jpg" 
+                             alt="BAGASY1AH Avatar" 
+                             class="w-[85%] h-[85%] object-cover object-center relative z-10 rounded-full"
+                             onerror="handleImageError(this)">
+                        
+                        <!-- Futuristic Cyber Fallback SVG Avatar (Displayed if photo fails) -->
+                        <div id="profile-fallback" class="hidden absolute inset-0 w-full h-full bg-gradient-to-b from-slate-900 to-cyan-950 flex flex-col items-center justify-center text-cyan-400 z-0">
+                            <i class="fa-solid fa-user-astronaut text-3xl mb-1 text-cyan-300 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]"></i>
+                            <span class="text-[9px] font-mono tracking-widest text-cyan-200">DEV</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Name & Title -->
+            <h1 class="text-3xl font-extrabold tracking-wider text-white glitch-title mb-1">
+                BAGASY1AH<span class="text-cyan-400">.dev</span>
+            </h1>
+
+            <!-- Subtitle / Greeting -->
+            <div class="holo-card p-3 rounded-lg w-full text-xs text-cyan-200/90 leading-relaxed border border-cyan-500/30 mt-2 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+                <i class="fa-solid fa-terminal text-cyan-400 mr-1.5"></i>
+                selamat datang di halaman ini. bantu supports ya guys
+            </div>
+        </header>
+
+        <!-- REDIRECT LINKS CONTAINER -->
+        <main class="w-full max-w-md px-4 mt-6 flex flex-col gap-3">
+
+            <!-- 1. DONATE -->
+            <a href="https://saweria.co" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-fuchsia-500/10 border border-fuchsia-500/40 flex items-center justify-center text-fuchsia-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-heart-circle-bolt text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">DONATE</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- 2. PROJECT -->
+            <a href="https://yourwebsite.com" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-code-fork text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">PROJECT</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- 3. GITHUB -->
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-slate-500/10 border border-slate-500/40 flex items-center justify-center text-slate-300 group-hover:scale-110 transition-transform">
+                        <i class="fa-brands fa-github text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">GITHUB</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- 4. WA -->
+            <a href="https://wa.me/1234567890" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-brands fa-whatsapp text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">WA</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- 5. LINKEDIN -->
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-blue-500/10 border border-blue-500/40 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-brands fa-linkedin-in text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">LINKEDIN</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- 6. TELE -->
+            <a href="https://t.me/username" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-sky-500/10 border border-sky-500/40 flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-brands fa-telegram text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">TELE</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- 7. INSTAGRAM -->
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-pink-500/10 border border-pink-500/40 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-brands fa-instagram text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">INSTAGRAM</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- 8. X -->
+            <a href="https://x.com" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-purple-500/10 border border-purple-500/40 flex items-center justify-center text-purple-300 group-hover:scale-110 transition-transform">
+                        <i class="fa-brands fa-x-twitter text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">X</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- 9. PORTOFOLIO -->
+            <a href="https://portfolio.com" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-amber-500/10 border border-amber-500/40 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-briefcase text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">PORTOFOLIO</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+            <!-- 10. COMUNITY -->
+            <a href="https://discord.gg" target="_blank" rel="noopener noreferrer" 
+               class="holo-button p-3.5 flex items-center justify-between text-cyan-300 group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-9 h-9 rounded bg-indigo-500/10 border border-indigo-500/40 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-users text-lg"></i>
+                    </div>
+                    <span class="font-orbitron font-semibold tracking-wider text-sm sm:text-base">COMUNITY</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-cyan-500/60 group-hover:text-cyan-300 group-hover:translate-x-1 transition-all"></i>
+            </a>
+
+        </main>
+
+        <!-- FOOTER HUD -->
+        <footer class="mt-8 text-center text-xs font-mono text-cyan-500/80">
+            <p>© 2026 BAGASY1AH.dev. All Rights Reserved.</p>
+        </footer>
+
+    </div>
+
+    <!-- DOCKED BOTTOM AUDIO PLAYER BAR -->
+    <div class="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 border-t border-cyan-500/40 backdrop-filter backdrop-blur-md px-4 py-2.5 flex items-center justify-center">
+        <div class="max-w-md w-full flex items-center justify-between gap-3 text-xs">
+            
+            <!-- Play / Pause Button -->
+            <button id="play-btn" class="w-9 h-9 rounded-full bg-cyan-500/20 border border-cyan-400/80 hover:bg-cyan-500/40 text-cyan-300 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-all">
+                <i class="fa-solid fa-play text-sm translate-x-0.5" id="play-icon"></i>
+            </button>
+
+            <!-- Audio Info & Progress Bar -->
+            <div class="flex-1 min-w-0 flex flex-col justify-center">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-cyan-300 font-mono font-bold truncate text-[11px]" id="track-title">Cyber Synthwave Audio</span>
+                    <!-- Equalizer Wave Visualizer -->
+                    <div class="flex items-center gap-0.5 h-3 paused" id="equalizer">
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                        <div class="eq-bar"></div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar Slider -->
+                <div class="flex items-center gap-2">
+                    <span id="current-time" class="text-[9px] font-mono text-cyan-400/70">0:00</span>
+                    <input type="range" id="seek-slider" min="0" max="100" value="0" class="w-full cursor-pointer">
+                    <span id="total-duration" class="text-[9px] font-mono text-cyan-400/70">0:00</span>
+                </div>
+            </div>
+
+            <!-- Volume Slider -->
+            <div class="hidden sm:flex items-center gap-1.5 shrink-0 pl-1 border-l border-cyan-500/20">
+                <i class="fa-solid fa-volume-high text-cyan-400/70 text-xs"></i>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.7" class="w-16 cursor-pointer">
+            </div>
+
+        </div>
+    </div>
+
+    <!-- AUDIO ELEMENT (Synthwave Stream Source) -->
+    <audio id="audio-player" crossorigin="anonymous" preload="metadata">
+        <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=synthwave-80s-110045.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-md bg-cyan-950 border border-cyan-400 text-cyan-200 text-xs font-mono opacity-0 pointer-events-none transition-opacity duration-300 shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+        URL copied to clipboard!
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Profile Image Error Handler
+        function handleImageError(img) {
+            img.style.display = 'none';
+            const fallback = document.getElementById('profile-fallback');
+            if (fallback) {
+                fallback.classList.remove('hidden');
+            }
+        }
+
+        // -------------------------------------------------------------
+        // WEB AUDIO PLAYER & CONTROLS
+        // -------------------------------------------------------------
+        const audio = document.getElementById('audio-player');
+        const playBtn = document.getElementById('play-btn');
+        const playIcon = document.getElementById('play-icon');
+        const seekSlider = document.getElementById('seek-slider');
+        const volumeSlider = document.getElementById('volume-slider');
+        const currentTimeSpan = document.getElementById('current-time');
+        const totalDurationSpan = document.getElementById('total-duration');
+        const equalizer = document.getElementById('equalizer');
+
+        let isPlaying = false;
+
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play().then(() => {
+                    isPlaying = true;
+                    playIcon.className = 'fa-solid fa-pause text-sm';
+                    equalizer.classList.remove('paused');
+                }).catch(err => {
+                    console.log('Audio playback prevented by browser:', err);
+                });
+            } else {
+                audio.pause();
+                isPlaying = false;
+                playIcon.className = 'fa-solid fa-play text-sm translate-x-0.5';
+                equalizer.classList.add('paused');
+            }
+        }
+
+        playBtn.addEventListener('click', () => {
+            playClickSound();
+            togglePlay();
+        });
+
+        // Time format utility
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        // Update Duration once loaded
+        audio.addEventListener('loadedmetadata', () => {
+            totalDurationSpan.textContent = formatTime(audio.duration);
+        });
+
+        // Update Progress Bar
+        audio.addEventListener('timeupdate', () => {
+            if (!isNaN(audio.duration)) {
+                seekSlider.value = (audio.currentTime / audio.duration) * 100;
+                currentTimeSpan.textContent = formatTime(audio.currentTime);
+            }
+        });
+
+        // Seek Audio
+        seekSlider.addEventListener('input', () => {
+            if (!isNaN(audio.duration)) {
+                audio.currentTime = (seekSlider.value / 100) * audio.duration;
+            }
+        });
+
+        // Volume Adjust
+        volumeSlider.addEventListener('input', () => {
+            audio.volume = volumeSlider.value;
+        });
+
+
+        // -------------------------------------------------------------
+        // SFX GENERATOR (Synthesizer UI Clicks)
+        // -------------------------------------------------------------
+        let sfxEnabled = false;
+        let sfxCtx = null;
+
+        function initSFX() {
+            if (!sfxCtx) {
+                sfxCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playHoverSound() {
+            if (!sfxEnabled || !sfxCtx) return;
+            try {
+                const osc = sfxCtx.createOscillator();
+                const gain = sfxCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, sfxCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, sfxCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.04, sfxCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, sfxCtx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(sfxCtx.destination);
+                osc.start();
+                osc.stop(sfxCtx.currentTime + 0.05);
+            } catch (e) {}
+        }
+
+        function playClickSound() {
+            if (!sfxEnabled || !sfxCtx) return;
+            try {
+                const osc = sfxCtx.createOscillator();
+                const gain = sfxCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, sfxCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, sfxCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.06, sfxCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, sfxCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(sfxCtx.destination);
+                osc.start();
+                osc.stop(sfxCtx.currentTime + 0.08);
+            } catch (e) {}
+        }
+
+        // SFX Toggle Button
+        const sfxBtn = document.getElementById('sfx-toggle-btn');
+        const sfxIcon = document.getElementById('sfx-icon');
+        const sfxStatus = document.getElementById('sfx-status');
+
+        sfxBtn.addEventListener('click', () => {
+            initSFX();
+            sfxEnabled = !sfxEnabled;
+            if (sfxEnabled) {
+                sfxIcon.className = "fa-solid fa-volume-high text-cyan-400";
+                sfxStatus.textContent = "SFX: ON";
+                playClickSound();
+            } else {
+                sfxIcon.className = "fa-solid fa-volume-xmark text-gray-400";
+                sfxStatus.textContent = "SFX: OFF";
+            }
+        });
+
+        // Hover & Click SFX to links
+        document.querySelectorAll('.holo-button').forEach(btn => {
+            btn.addEventListener('mouseenter', playHoverSound);
+            btn.addEventListener('click', playClickSound);
+        });
+
+        // Share Link Copy
+        const shareBtn = document.getElementById('share-btn');
+        const toast = document.getElementById('toast');
+
+        shareBtn.addEventListener('click', () => {
+            playClickSound();
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = window.location.href;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2500);
+        });
+
+
+        // -------------------------------------------------------------
+        // THREE.JS 3D HOLOGRAPHIC HEXAGONAL BACKGROUND
+        // -------------------------------------------------------------
+        let scene, camera, renderer, hexGrid, particleSystem;
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
+
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        function init3D() {
+            const canvas = document.getElementById('webgl-canvas');
+            
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x030712, 0.025);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, -15, 25);
+            camera.lookAt(0, 5, 0);
+
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            createHexagonalGrid();
+            createHoloParticles();
+
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('mousemove', onDocumentMouseMove);
+            document.addEventListener('touchmove', onTouchMove, { passive: true });
+        }
+
+        function createHexagonShape(radius) {
+            const shape = new THREE.Shape();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i;
+                const x = radius * Math.cos(angle);
+                const y = radius * Math.sin(angle);
+                if (i === 0) shape.moveTo(x, y);
+                else shape.lineTo(x, y);
+            }
+            shape.closePath();
+            return shape;
+        }
+
+        function createHexagonalGrid() {
+            const radius = 1.2;
+            const hexShape = createHexagonShape(radius);
+            const geometry = new THREE.BufferGeometry().setFromPoints(hexShape.getPoints());
+
+            const material = new THREE.LineBasicMaterial({
+                color: 0x06b6d4,
+                transparent: true,
+                opacity: 0.35,
+                blending: THREE.AdditiveBlending
+            });
+
+            hexGrid = new THREE.Group();
+
+            const rows = 28;
+            const cols = 28;
+            const xOffset = radius * 1.732;
+            const yOffset = radius * 1.5;
+
+            for (let r = -rows / 2; r < rows / 2; r++) {
+                for (let c = -cols / 2; c < cols / 2; c++) {
+                    const line = new THREE.LineLoop(geometry, material);
+                    
+                    let x = c * xOffset;
+                    let y = r * yOffset;
+
+                    if (Math.abs(r) % 2 === 1) {
+                        x += xOffset / 2;
+                    }
+
+                    line.position.set(x, y, 0);
+                    line.userData = { 
+                        baseX: x, 
+                        baseY: y, 
+                        phase: Math.random() * Math.PI * 2
+                    };
+
+                    hexGrid.add(line);
+                }
+            }
+
+            hexGrid.rotation.x = -Math.PI / 3;
+            scene.add(hexGrid);
+        }
+
+        function createHoloParticles() {
+            const particleCount = 400;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            const colorCyan = new THREE.Color(0x06b6d4);
+            const colorMagenta = new THREE.Color(0xd946ef);
+
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 60;
+                positions[i + 1] = (Math.random() - 0.5) * 60;
+                positions[i + 2] = Math.random() * 30 - 10;
+
+                const mixedColor = colorCyan.clone().lerp(colorMagenta, Math.random());
+                colors[i] = mixedColor.r;
+                colors[i + 1] = mixedColor.g;
+                colors[i + 2] = mixedColor.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.35,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending
+            });
+
+            particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onDocumentMouseMove(event) {
+            mouseX = (event.clientX - windowHalfX) * 0.001;
+            mouseY = (event.clientY - windowHalfY) * 0.001;
+        }
+
+        function onTouchMove(event) {
+            if (event.touches.length > 0) {
+                mouseX = (event.touches[0].clientX - windowHalfX) * 0.001;
+                mouseY = (event.touches[0].clientY - windowHalfY) * 0.001;
+            }
+        }
+
+        // Animation Loop
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            targetX += (mouseX - targetX) * 0.05;
+            targetY += (mouseY - targetY) * 0.05;
+
+            camera.position.x = targetX * 12;
+            camera.position.y = -15 + (-targetY * 8);
+            camera.lookAt(0, 2, 0);
+
+            if (hexGrid) {
+                hexGrid.children.forEach((hex) => {
+                    const distFromCenter = Math.sqrt(hex.userData.baseX * hex.userData.baseX + hex.userData.baseY * hex.userData.baseY);
+                    const wave = Math.sin(elapsedTime * 2 + distFromCenter * 0.3 + hex.userData.phase) * 0.8;
+                    hex.position.z = wave;
+                });
+            }
+
+            if (particleSystem) {
+                particleSystem.rotation.z = elapsedTime * 0.03;
+                particleSystem.rotation.y = Math.sin(elapsedTime * 0.05) * 0.2;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.onload = function() {
+            init3D();
+            animate();
+        };
+    </script>
+</body>
+</html>
